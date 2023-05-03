@@ -4,6 +4,7 @@ library(httr)
 
 set.seed(1)
 
+# Algoritm to download all pages
 page_id <- 0
 
 while (TRUE) {
