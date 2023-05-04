@@ -2,9 +2,9 @@ library(tidyverse)
 library(rvest)
 library(httr)
 
-set.seed(1)
-
+#______SCRAPY WEB_______
 # Algoritm to download all pages
+set.seed(1)
 page_id <- 0
 
 while (TRUE) {
@@ -29,62 +29,134 @@ file_info <- file.info(pages)
 file_info <- file_info[with(file_info, order(as.POSIXct(mtime))), ]
 pages_ordered <- rownames(file_info)
 
-list_titulos <- list()
-list_precios <- list()
-list_area <- list()
-list_links <- list()
+# List of Projects in Development
+development_titulos <- list()
+development_precios <- list()
+development_area <- list()
+development_links <- list()
 
-lapply(pages_ordered, function(pagina){
-  data <-read_html(pagina, encoding="UTF-8")
-  #class(data)
-  #html_text(data)
+# List of Properties Finished
+properties_titulos <- list()
+properties_precios <- list()
+properties_area <- list()
+properties_links <- list()
+
+pages_ordered <- list(pages_ordered)
+
+# ....SCRAPY OF EACH PAGE....
+# Location of PROPERTY FINISHIED
+list_location_properties <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  print(data |> html_elements(xpath = '//div/div[@class="sc-ge2uzh-1 gFoERJ"]'))
+  titulos_property <- data |> html_elements(xpath = '//div/div[@class="sc-ge2uzh-1 gFoERJ"]')
+  properties_titulos <- c(
+    properties_titulos,
+    titulos_property |> html_text2()
+  )
+})
+# price of PROPERTY FINISHIED
+list_price_properties <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  price <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_PRICE"]')
+  print(price)
+  properties_precios <- c(
+    properties_precios,
+    price |> html_text2()
+  )
+})
+# features AREA of PROPERTY FINISHIED
+list_area_properties <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  features_2 <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_FEATURES"]')
+  area_2 <- features_2 |> html_element('span:nth-child(1)') |> html_text2()
+  print(area_2)
+  properties_area <- c(
+    properties_area,
+    area_2
+  )
+})
+# links of PROPERTY FINISHIED
+list_links_properties <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  links_2 <- data |> html_elements(xpath = '//div/div[@data-qa="posting PROPERTY"]') |> html_attr('data-to-posting')
+  print(links_2)
+  properties_links <- c(
+    properties_links,
+    links_2
+  )
 })
 
-data <-read_html('data/page-1.html', encoding="UTF-8")
-titulos <- data |> html_elements(xpath ='//div[@data-qa="POSTING_CARD_LOCATION"]')
-list_titulos <- c(
-  list_titulos,
-  titulos |> html_text2()
+# converting the list containg the scraped data into tibble
+df_properties <- tibble(
+  unlist(list_location_properties),
+  unlist(list_price_properties),
+  #unlist(list_area_properties),
+  unlist(list_links_properties)
 )
 
+names(df_properties) <- c('ubicación', 'precio', 'links')
+
+# Location of DEVELOPMENT
+list_location_development <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  titulos_development <- data |> html_elements(xpath ='//div/div[@class="sc-i1odl-17 kiOodf"]')
+  print(titulos_development |> html_text2())
+  development_titulos <- c(
+    development_titulos,
+    titulos_development |> html_text2()
+  )
+})
 # price of DEVELOPMENT
-price_from <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_PRICE_FROM"]')
-list_precios <- c(
-  list_precios,
-  price_from |> html_text2()
-)
-#price of PROPERTY FINISHIED
-price <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_PRICE"]')
-list_precios <- c(
-  list_precios,
-  price |> html_text2()
-)
-# features of DEVELOPMENT
-features_1 <- data |> html_elements(xpath = '//div/ul[@data-qa="POSTING_CARD_FEATURES"]')
-area_1 <- features_1 |> html_element('li:nth-child(3)') |> html_text2()
-list_area <- c(
-  list_area,
-  area_1
-)
-# features of PROPERTY FINISHIED
-features_2 <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_FEATURES"]')
-area_2 <- features_2 |> html_element('span:nth-child(1)') |> html_text2()
-list_area <- c(
-  list_area,
-  area_2
-)
+list_price_development <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  price_from <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_PRICE_FROM"]')
+  print(price_from)
+  development_precios <- c(
+    development_precios,
+    price_from |> html_text2()
+  )
+})
+# features AREA of DEVELOPMENT
+list_area_development <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  features_1 <- data |> html_elements(xpath = '//div/ul[@data-qa="POSTING_CARD_FEATURES"]')
+  area_1 <- features_1 |> html_element('li:nth-child(3)') |> html_text2()
+  print(area_1)
+  development_area <- c(
+    development_area,
+    area_1
+  )
+})
 # links of DEVELOPMENT
-links_development <- data |> html_elements(xpath = '//div/div[@data-qa="posting DEVELOPMENT"]') |> html_attr('data-to-posting')
-list_links <- c(
-  list_links,
-  links_development
+list_links_development <- sapply(pages_ordered[[1]], function(page){
+  print(page)
+  data <-read_html(page, encoding="UTF-8")
+  links_1 <- data |> html_elements(xpath = '//div/div[@data-qa="posting DEVELOPMENT"]') |> html_attr('data-to-posting')
+  print(links_1)
+  development_links <- c(
+    development_links,
+    links_1
+  )
+})
+
+# converting the list containg the scraped data into tibble
+df_development <- tibble(
+  unlist(list_location_development),
+  #unlist(list_price_development),
+  unlist(list_area_development),
+  unlist(list_links_development)
 )
-# links of PROPERTY FINISHIED
-links_property <- data |> html_elements(xpath = '//div/div[@data-qa="posting PROPERTY"]') |> html_attr('data-to-posting')
-list_links <- c(
-  list_links,
-  links_property
-)
+names(df_development) <- c('ubicación', 'area', 'link') 
+
+
+
 
 
 
