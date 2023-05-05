@@ -70,8 +70,8 @@ list_price_properties <- sapply(pages_ordered[[1]], function(page){
 list_area_properties <- sapply(pages_ordered[[1]], function(page){
   print(page)
   data <-read_html(page, encoding="UTF-8")
-  features_2 <- data |> html_elements(xpath = '//div/div[@data-qa="POSTING_CARD_FEATURES"]')
-  area_2 <- features_2 |> html_element('span:nth-child(1)') |> html_text2()
+  features_2 <- data |> html_elements(xpath = '//div/div[@class="sc-i1odl-5 eodGhu"]')
+  area_2 <- features_2 |> html_text2()
   print(area_2)
   properties_area <- c(
     properties_area,
@@ -98,7 +98,7 @@ df_properties <- tibble(
   unlist(list_links_properties)
 )
 
-names(df_properties) <- c('ubicación', 'precio', 'links')
+names(df_properties) <- c('ubicación', 'precio', 'area', 'links')
 
 # Location of DEVELOPMENT
 list_location_development <- sapply(pages_ordered[[1]], function(page){
@@ -154,9 +154,6 @@ df_development <- tibble(
   unlist(list_links_development)
 )
 names(df_development) <- c('ubicación', 'area', 'link') 
-
-
-
 
 
 
