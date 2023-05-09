@@ -112,13 +112,31 @@ df_properties <- read_excel('properties.xlsx')
 df_development <- read_excel('development.xlsx')
 
 df_properties <- df_properties |> 
-  mutate(valor = str_extract(total, regex("^USD\\s*\\d+\\.\\d+\\.?\\d*")),
+  mutate(valor = str_extract(total, regex("USD\\s*\\d+\\.?\\d+\\.?\\d*")),
          alicuota = str_extract(total, regex("USD\\s*\\d+\\s*(?i)Condominio/Alícuota")),
          area = str_extract(total, regex("\\d+\\s*(?i)m²")),
          habitaciones = str_extract(total, regex("\\d+\\s*(?i)hab.")),
          baños = str_extract(total, regex("\\d+\\s*(?i)baños")),
          estacionamientos = str_extract(total, regex("\\d+\\s*(?i)estac.")),
-         ubicacion = str_extract(total, regex(".+,\\s+Quito")))
+         ubicacion_general = str_extract(total, regex(".+,\\s+Quito")))
 
+# string splitting
 we <- str_split(df_properties$total, '\n')
+# add column ubicación específica
+df_properties <- df_properties |>
+  mutate(ubicacion_especifica = map_chr(we, 3))
+# change of character to numeric several columns
+df_properties <- df_properties |>
+  mutate(valor = str_extract(valor, regex("\\d+\\.?\\d+\\.?\\d*")),
+         alicuota = str_extract(alicuota, regex("\\d+")),
+         area = str_extract(area, regex("\\d+\\.?\\d?")),
+         habitaciones = str_extract(habitaciones, regex("\\d+")),
+         baños = str_extract(baños, regex("\\d+")),
+         estacionamientos = str_extract(estacionamientos, regex("\\d+"))) |> 
+  mutate(valor = str_replace_all(valor, "\\.", ""))
+
+df_properties[,c(3:8)] <- lapply(df_properties[,c(3:8)], as.numeric)
+df_properties[c(3:8)][is.na(df_properties[c(3:8)])] <- 0
+
+
 
