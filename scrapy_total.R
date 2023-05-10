@@ -112,9 +112,9 @@ df_properties <- read_excel('properties.xlsx')
 df_development <- read_excel('development.xlsx')
 
 df_properties <- df_properties |> 
-  mutate(valor = str_extract(total, regex("USD\\s*\\d+\\.?\\d+\\.?\\d*")),
+  mutate(valor = str_extract(total, regex("[USD|$]\\s*\\d+\\.?\\d+\\.?\\d*")),
          alicuota = str_extract(total, regex("USD\\s*\\d+\\s*(?i)Condominio/Alícuota")),
-         area = str_extract(total, regex("\\d+\\s*(?i)m²")),
+         area = str_extract(total, ifelse(str_detect(total, regex("\\d+\\s*m²"))==TRUE, regex("\\d+\\s*m²"), regex("\\d+\\s*m2"))),
          habitaciones = str_extract(total, regex("\\d+\\s*(?i)hab.")),
          baños = str_extract(total, regex("\\d+\\s*(?i)baños")),
          estacionamientos = str_extract(total, regex("\\d+\\s*(?i)estac.")),
@@ -133,10 +133,15 @@ df_properties <- df_properties |>
          habitaciones = str_extract(habitaciones, regex("\\d+")),
          baños = str_extract(baños, regex("\\d+")),
          estacionamientos = str_extract(estacionamientos, regex("\\d+"))) |> 
-  mutate(valor = str_replace_all(valor, "\\.", ""))
+  mutate(valor = str_replace_all(valor, "\\.", ""),
+         links = paste('https://www.plusvalia.com', links, sep = ""))
 
 df_properties[,c(3:8)] <- lapply(df_properties[,c(3:8)], as.numeric)
 df_properties[c(3:8)][is.na(df_properties[c(3:8)])] <- 0
 
+# add new columns
+df_properties <- df_properties |> mutate(valor_metro = round(valor / area, digits = 2))
+
+# delete duplicates
 
 
