@@ -114,7 +114,9 @@ df_development <- read_excel('development.xlsx')
 df_properties <- df_properties |> 
   mutate(valor = str_extract(total, regex("[USD|$]\\s*\\d+\\.?\\d+\\.?\\d*")),
          alicuota = str_extract(total, regex("USD\\s*\\d+\\s*(?i)Condominio/Alícuota")),
-         area = str_extract(total, ifelse(str_detect(total, regex("\\d+\\s*m²"))==TRUE, regex("\\d+\\s*m²"), regex("\\d+\\s*m2"))),
+         area = str_extract(total, ifelse(str_detect(total, regex("\\d+\\s*m²"))==TRUE, 
+                                          regex("\\d+\\s*m²"), 
+                                          regex("\\d+\\s*m2"))),
          habitaciones = str_extract(total, regex("\\d+\\s*(?i)hab.")),
          baños = str_extract(total, regex("\\d+\\s*(?i)baños")),
          estacionamientos = str_extract(total, regex("\\d+\\s*(?i)estac.")),
