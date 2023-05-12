@@ -3,7 +3,10 @@ library(rvest)
 library(httr)
 library(readxl)
 library(stringr)
-library(purrr)
+library(purrr) # to split strings
+library(hrbrthemes)
+library(viridis)
+library(viridisLite)
 
 #______SCRAPY WEB_______
 # Algoritm to download all pages
@@ -145,5 +148,49 @@ df_properties[c(3:8)][is.na(df_properties[c(3:8)])] <- 0
 df_properties <- df_properties |> mutate(valor_metro = round(valor / area, digits = 2))
 
 # delete duplicates
+df_properties <- df_properties |> distinct()
+
+# export df properties final
+writexl::write_xlsx(df_properties, 'properties_procesado.xlsx')
+
+#_____Analisis of Data______
+# Exploration of data of Properties tibble
+label1 <- df_properties |> group_by(habitaciones) |> summarise(num_propiedades = n()) |>
+  mutate(proporcion = num_propiedades / nrow(df_properties))
+
+grafico_1 <- df_properties |> group_by(habitaciones) |> summarise(num_propiedades = n()) |>
+  mutate(proporcion = num_propiedades / nrow(df_properties)) |>
+  ggplot(aes(habitaciones, num_propiedades, size = proporcion)) +
+  geom_point(alpha = 0.6, aes(color= proporcion)) +
+  scale_size(range = c(.1, 20), name="Propiedades x habitaciones") +
+  theme(legend.position="bottom") +
+  ylab("No. Propiedades") +
+  xlab("Habitaciones") +
+  geom_text(
+    label=label1$habitaciones, #to insert labels to the graph
+    nudge_x=0, nudge_y=0.1,
+    size = 3,
+    check_overlap=T
+  )
+grafico_1 +
+  scale_color_viridis(option = "D") +
+  scale_fill_viridis()
+
+df_properties |> ggplot(aes(habitaciones, log10(area), color= valor_metro)) +
+  scale_color_gradient(low="green",high="darkgreen")+
+  geom_point()
+
+median(df_properties$valor)
+mean(df_properties$valor)
+
+# Create the function.
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+result <- getmode(df_properties$valor)
+result
+
+
 
 
