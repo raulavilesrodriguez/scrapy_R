@@ -5,8 +5,8 @@ library(readxl)
 library(stringr)
 library(purrr) # to split strings
 library(hrbrthemes)
-library(viridis)
-library(viridisLite)
+library(viridis) # pallette of colors
+library(viridisLite) # pallette of colors
 
 #______SCRAPY WEB_______
 # Algoritm to download all pages
@@ -145,7 +145,7 @@ df_properties[,c(3:8)] <- lapply(df_properties[,c(3:8)], as.numeric)
 df_properties[c(3:8)][is.na(df_properties[c(3:8)])] <- 0
 
 # add new columns
-df_properties <- df_properties |> mutate(valor_metro = round(valor / area, digits = 2))
+df_properties <- df_properties |> mutate(valor_metro = ifelse(area >0, round(valor / area, digits = 2), 0))
 
 # delete duplicates
 df_properties <- df_properties |> distinct()
@@ -176,20 +176,41 @@ grafico_1 +
   scale_color_viridis(option = "D") +
   scale_fill_viridis()
 
-df_properties |> ggplot(aes(habitaciones, log10(area), color= valor_metro)) +
+grafico_2 <- df_properties |> ggplot(aes(habitaciones, log10(area), color= valor_metro)) +
   scale_color_gradient(low="green",high="darkgreen")+
   geom_point()
+grafico_2
 
+grafico_3 <- df_properties |> select(valor) |> ggplot(aes(log10(valor))) +
+  geom_density(fill="#99627A") +
+  labs(x = "Valor (normalizado)")
+grafico_3
+
+df_filtered <- df_properties |> filter(valor >0 & valor < 218000000)
+grafico_4 <- df_filtered |> ggplot(aes(c(1: nrow(df_filtered)), valor, color=valor)) + 
+  scale_color_gradient(low="#FFE300",high="#B20600")+
+  geom_point() +
+  labs(x = "Propiedades")
+grafico_4
+
+grafico_5 <- df_filtered |> ggplot(aes(c(1:nrow(df_filtered)), habitaciones, color=habitaciones)) +
+  scale_color_gradient(low="#EBB02D",high="#159895")+
+  geom_point() +
+  labs(x = "Propiedades")
+grafico_5
+
+# Median
 median(df_properties$valor)
+# Mean
 mean(df_properties$valor)
 
-# Create the function.
+# Create the function to calculate the MODE
 getmode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }
-result <- getmode(df_properties$valor)
-result
+moda <- getmode(df_properties$valor)
+moda
 
 
 
