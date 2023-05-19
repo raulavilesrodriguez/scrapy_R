@@ -10,6 +10,13 @@ value_ini <- 100000
 variables <- colnames(df_properties)
 variables <- variables[c(-1,-2, -9, -10, -11)]
 
+# to do linkeable the column named links 
+linkeable <- function(x){
+  toString(tags$a(href = x, x))
+}
+df_properties$links <- lapply(df_properties$links, linkeable)
+
+#____Shiny App___
 App <- function(){
   ui <- fluidPage(
     useShinyjs(),
@@ -25,11 +32,32 @@ App <- function(){
          </a>
          </h6>
     )"),
+    
+    tags$head(
+      tags$style(
+        HTML("
+      @media only screen and (max-width: 600px) {
+        .responsive-table {
+          width: 100% !important;
+          font-size:80%;
+        }
+      }
+      
+      @media only screen and (min-width: 601px) {
+        .responsive-table {
+          width: 1000px !important;
+          font-size:80%;
+        }
+      }
+    ")
+      )
+    ),
+    
     textOutput("panel"),
-    HTML(r"(<br>)"),
     tabsetPanel(
       id = "tabset",
       tabPanel("Propiedades",
+               HTML(r"(<br>)"),
                sidebarLayout(
                  sidebarPanel(
                    HTML(r"(<br>)"),
@@ -58,6 +86,9 @@ App <- function(){
                         color:#00FFCA"),
                    plotOutput('plot_propiedades', brush = "plot_brush")
                  )
+               ),
+               fluidRow(
+                 column(12, div(class = "responsive-table", DT::dataTableOutput("tabla_properties")))
                )
                
                ),
@@ -67,6 +98,7 @@ App <- function(){
     
   )
   server <- function(input, output, session){
+    Sys.setlocale(category = "LC_ALL", locale = "en_US.UTF-8")
     thematic::thematic_shiny()
     
     output$panel <- renderText({
@@ -145,7 +177,10 @@ App <- function(){
                                 .data[['estacionamientos']] >= input$filt_estacionamientos[1] & .data[['estacionamientos']] <= input$filt_estacionamientos[2],
                                 .data[['baños']] >= input$filt_baños[1] & .data[['baños']] <= input$filt_baños[2],
                                 .data[['habitaciones']] >= input$filt_habitaciones[1] & .data[['habitaciones']] <= input$filt_habitaciones[2],
-                                )
+                                ) |> mutate(numeracion = row_number()) |>
+                                select(-c(any_of('total'))) |>
+                                relocate(any_of('numeracion')) 
+                                
       } else{
         df_properties
       } 
@@ -162,11 +197,23 @@ App <- function(){
                      req(input$filt_estacionamientos)
                      req(input$filt_baños)
                      req(input$filt_habitaciones)
-                     ggplot(data_1(), aes(c(1:nrow(data_1())), .data[['valor']])) +
+                     ggplot(data_1(), aes(numeracion, valor)) +
                        scale_color_gradient(low="#FFE300",high="#B20600")+
-                       geom_point(aes(color= .data[['valor']])) +
+                       geom_point(aes(color= valor)) +
                        labs(x = "Propiedades", y = "Valor (USD)")
-                   })  
+                   })
+                   output$tabla_properties <- DT::renderDataTable({
+                     brushedPoints(data_1(), 
+                                   input$plot_brush
+                                   )
+                   }, rownames = FALSE,
+                     options = list(
+                       bSortClasses = TRUE,iDisplayLength = 10,   width = "100%",
+                       scrollX=TRUE,
+                       autoWidth = TRUE
+                     )
+                   )
+                   
                  } else{
                    output$plot_propiedades <- NULL
                  }
