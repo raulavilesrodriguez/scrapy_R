@@ -13,13 +13,23 @@ library(viridisLite) # pallette of colors
 set.seed(1)
 page_id <- 0
 
+fecha <- format(Sys.Date(), "%d%b%Y")
+route_directory <- paste0('data/', fecha)
+
+if (!dir.exists(route_directory)) {
+  dir.create(route_directory, recursive = TRUE)
+  message("Directorio creado: ", route_directory)
+} else {
+  message("El directorio ya existe: ", route_directory)
+}
+
 while (TRUE) {
   result <- try({
     page_id <- page_id + 1
-    url_web <- paste0('https://www.plusvalia.com/inmuebles-en-venta-en-quito-pagina-',page_id,'.html')
-    dest_page <- paste0('data/page-',page_id,'.html')
+    url_web <- paste0('https://www.plusvalia.com/venta/inmuebles/pichincha/quito?page=',page_id)
+    dest_page <- paste0(route_directory, '/page-',page_id,'.html')
     download.file(url_web, destfile = dest_page, quiet=TRUE)
-    if (page_id == 1550) stop('error')  #1550 is the last web page
+    if (page_id == 410) stop('error')  #1550 is the last web page
     url_web
   }, silent = TRUE)
   if (inherits(result, 'try-error')){
@@ -29,7 +39,7 @@ while (TRUE) {
 }
 
 # list of files in a Directory
-pages <- (list.files(path = 'data/', pattern = '.html', all.files = TRUE, full.names = TRUE, recursive=FALSE))
+pages <- (list.files(path = paste0(route_directory,'/'), pattern = '.html', all.files = TRUE, full.names = TRUE, recursive=FALSE))
 # order for Date of creation
 file_info <- file.info(pages)
 file_info <- file_info[with(file_info, order(as.POSIXct(mtime))), ]
@@ -121,7 +131,7 @@ df_properties <- df_properties |>
                                           regex("\\d+\\s*m²"), 
                                           regex("\\d+\\s*m2"))),
          habitaciones = str_extract(total, regex("\\d+\\s*(?i)hab.")),
-         baños = str_extract(total, regex("\\d+\\s*(?i)baños")),
+         baños = str_extract(total, regex("\\d+\\s*(?i)bañ[oi]s?")),
          estacionamientos = str_extract(total, regex("\\d+\\s*(?i)estac.")),
          ubicacion_general = str_extract(total, regex(".+,\\s+Quito")))
 
@@ -151,7 +161,7 @@ df_properties <- df_properties |> mutate(valor_metro = ifelse(area >0, round(val
 df_properties <- df_properties |> distinct()
 
 # export df properties final
-writexl::write_xlsx(df_properties, 'properties_procesado.xlsx')
+writexl::write_xlsx(df_properties, here::here("results", paste0("properties_procesado_", fecha, ".xlsx")))
 
 #_____Analisis of Data______
 # Exploration of data of Properties tibble
