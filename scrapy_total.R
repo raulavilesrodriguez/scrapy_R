@@ -11,7 +11,7 @@ library(viridisLite) # pallette of colors
 #______SCRAPY WEB_______
 # Algoritm to download all pages
 set.seed(1)
-page_id <- 0
+page_id <- 219
 
 fecha <- format(Sys.Date(), "%d%b%Y")
 route_directory <- paste0('data/', fecha)
