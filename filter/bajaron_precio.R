@@ -4,9 +4,7 @@ library(stringr)
 library(writexl)
 library(here)
 
-bajaron_precio <- function(file_old, file_new) {
-  df_old <- read_xlsx(file_old)
-  df_new <- read_xlsx(file_new)
+bajaron_precio <- function(df_old, df_new, exportar = TRUE) {
   
   df_old <- df_old |>
     select(
@@ -29,12 +27,15 @@ bajaron_precio <- function(file_old, file_new) {
     arrange(desc(porcentaje_bajada))
   
   # Export
-  date_old <- gsub("nuevas_propiedades_|\\.xlsx", "", basename(file_old))
-  date_new <- gsub("nuevas_propiedades_|\\.xlsx", "", basename(file_new))
-  nombre_salida <- str_c("bajaron_precio_", date_old, "_a_", date_new, ".xlsx")
+  if(exportar){
+    date_old <- gsub("nuevas_propiedades_|\\.xlsx", "", basename(file_old))
+    date_new <- gsub("nuevas_propiedades_|\\.xlsx", "", basename(file_new))
+    nombre_salida <- str_c("bajaron_precio_", date_old, "_a_", date_new, ".xlsx")
+    
+    write_xlsx(df_compare, here::here("filter/results/bajaron_precio", nombre_salida))
+    message("Archivo exportado: ", nombre_salida)
+  }
   
-  write_xlsx(df_compare, here::here("filter/results/bajaron_precio", nombre_salida))
-  message("Archivo exportado: ", nombre_salida)
   df_compare
 }
 

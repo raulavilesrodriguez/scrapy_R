@@ -1,46 +1,43 @@
-library(here)
-
-source(here("filter/nuevas_propiedades.R"))
-source(here("filter/bajaron_precio.R"))
-source(here("filter/propiedades_vendidas.R"))
-source(here("filter/filtrado_zonas_precio.R"))
-
-file <- "results/properties_procesado_28dic2025.xlsx"
-
-nuevas_propiedades(file)
-
-
-file_old <- "filter/results/nuevas_propiedades_16dic2025.xlsx"
-file_new <- "filter/results/nuevas_propiedades_28dic2025.xlsx"
-bajaron_precio(file_old, file_new)
+#---INPUTS ---
+file_anterior <- "results/properties_procesado_16dic2025.xlsx"
+file_new <- "results/properties_procesado_28dic2025.xlsx"
+n_nuevas <- 500
 
 precio_maximo <- 100000
 num_habitaciones <- 2
 num_bathrooms <- 2
 
 zonas_objetivo <- c(
-  "la carolina",
+  "carolina",
   "monteserrin",
+  "campo alegre",
+  "republica de el salvador",
   "republica del salvador",
+  "portugal",
   "quito tenis",
   "jardines de amagasi",
   "tumbaco",
   "cumbaya",
   "miravalle",
-  "la primavera",
-  "bellavista",
+  "primavera",
   "gonzalez suarez",
   "gaspar de villarroel",
-  "quicentro"
+  "batan",
+  "carmelo",
+  "labrador",
+  "granda centeno",
+  "bellavista"
+  #"bosque",
+  #"eloy alfaro",
+  #"quicentro"
 )
 
-filtrado_zonas_precio(
-  file_new, 
-  zonas_objetivo, 
-  precio_maximo, 
-  num_habitaciones, 
-  num_bathrooms
-  )
+zonas_excluir <- c(
+  "sur", "carcelen", "carretas", "turubamba", "quitumbe", 
+  "cesar villacres", "calderon", "cotocollao", "enrique aymer"
+)
+
+
 
 
 
