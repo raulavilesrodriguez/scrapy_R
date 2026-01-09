@@ -5,18 +5,22 @@ library(stringi)
 library(tidyr)
 library(purrr)
 library(here)
+library(ggplot2)
 
 source(here::here("filter/funciones_to_filtrar.R"))
 
 
 filtrado_zonas_precio <- function(
-    df, 
+    df,
+    file = NULL,
     zonas_objetivo, 
     precio_maximo, 
     num_habitaciones, 
     num_bathrooms, 
     zonas_excluir,
     output_name_file = "",
+    porcnt_reventa,
+    retorno_esperado = 0,
     exportar = TRUE,
     debug = FALSE
     ) {
@@ -46,7 +50,6 @@ filtrado_zonas_precio <- function(
     assign("debug_zonas_link", df_debug, envir = .GlobalEnv)
   }
   
-  
   df_filtrado <- df |> 
     filter(
       !is.na(zona),
@@ -55,8 +58,7 @@ filtrado_zonas_precio <- function(
     )
   
   df_filtrado <- df_filtrado |>
-    filter(!map_lgl(ubicacion_norm, ~ zonas_no_deseadas(.x, zonas_excluir))) |> #devuelve true si contiene zona no deseada
-    filter(!map_lgl(links_norm, ~ zonas_no_deseadas(.x, zonas_excluir))) #devuelve true si contiene zona no deseada
+    filter(!map_lgl(ubicacion_norm, ~ zonas_no_deseadas(.x, zonas_excluir))) #devuelve true si contiene zona no deseada
   
   precio_m2_zona <- df_filtrado |>
     group_by(zona) |>
@@ -68,14 +70,19 @@ filtrado_zonas_precio <- function(
       num_propiedades = n(),
       .groups = "drop"
     ) |>
-    filter(!is.na(zona))
+    distinct(zona, .keep_all = TRUE)
   
   # Oportunidades
-  oportunidades <- df_filtrado |>
+  oportunidades_base <- df_filtrado |>
     left_join(precio_m2_zona, by = "zona") |>
     mutate(
-      descuento_pct = ((valor_metro/precio_m2_promedio) - 1) * 100
-    ) |>
+      descuento_pct = (1 -(valor_metro/precio_m2_promedio))
+    )
+  
+  assign("oportunidades_base", oportunidades_base, envir = .GlobalEnv)
+  
+  
+  oportunidades <- oportunidades_base|>
     filter(
       valor <= precio_maximo,
       valor > 20000,
@@ -88,18 +95,64 @@ filtrado_zonas_precio <- function(
   
   oportunidades <- oportunidades |>
     mutate(
-      precio_reventa_estimado = precio_m2_promedio * area * 0.95,
+      precio_reventa_estimado = precio_m2_promedio * area * porcnt_reventa,
       ganancia_bruta = precio_reventa_estimado - valor,
       retorno_pct = ganancia_bruta / valor
     )
   
+  mediana_descuento_zona <- oportunidades |>
+    group_by(zona) |>
+    summarise(
+      mediana_descuento = median(descuento_pct, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  oportunidades <- oportunidades |>
+    left_join(mediana_descuento_zona, by = "zona")
+  
+  oportunidades <- oportunidades |>
+    mutate(
+      retorno_norm = pmin(retorno_pct, 0.5) / 0.5
+    )
+  
+  oportunidades <- oportunidades |>
+    mutate(
+      score = 
+        (descuento_pct * 0.4) +
+        ((precio_maximo - valor) / precio_maximo * 0.2) +
+        (pmin(habitaciones, 3) / 3 * 0.2) +
+        (retorno_norm * 0.2)
+    ) |>
+    arrange(desc(score))
+  
+  oportunidades<-  oportunidades|>
+    filter(!map_lgl(links, ~ zonas_no_deseadas(.x, zonas_excluir))) #devuelve true si contiene zona no deseada
+  
+  if(retorno_esperado > 0){
+    oportunidades <- oportunidades |>
+      filter(retorno_norm >= retorno_esperado)
+  }
+  
+  # Gráfico de caja de descuentos por zona
+  plot_descuentos <- ggplot(oportunidades, aes(zona, descuento_pct)) +
+    geom_boxplot() +
+    coord_flip() +
+    labs(
+      title = "Descuento vs mercado por zona",
+      y = "Descuento %",
+      x = ""
+    )
+  print(plot_descuentos)
   
   # Exportar a Excel
   if(exportar){
-    date_raw <- stringr::str_extract(
-      basename(file),
-      "\\d{1,2}[a-z]{3}\\d{4}"
-    )
+    date_raw <- if(!is.null(file)){
+      stringr::str_extract(
+        basename(file),
+        "\\d{1,2}[a-z]{3}\\d{4}")
+    } else {
+      format(Sys.Date(), "%d%b%Y")
+    }
     
     nombre_salida <- str_c(output_name_file, date_raw, ".xlsx")
     write_xlsx(oportunidades, here::here("filter/results/filtrado_zonas_precio", nombre_salida))

@@ -25,35 +25,41 @@ df_bajaron_precio <- bajaron_precio(
 
 #-------- FILTRADO ZONAS Y PRECIO --------#
 # Filtrado de todo el archivo
-filtrado_zonas_precio(
+oportunidades <- filtrado_zonas_precio(
   df_nuevas_propiedades,
+  file_new,
   zonas_objetivo, 
   precio_maximo, 
   num_habitaciones, 
   num_bathrooms,
   zonas_excluir,
   "filtrado_zonas_precio_",
+  porcnt_reventa,
   debug = TRUE
 )
 
 # Filtrado de solo nuevas propiedades
 filtrado_zonas_precio(
-  df_nuevas_propiedades_filt, 
+  df_nuevas_propiedades_filt,
+  file_new,
   zonas_objetivo, 
   precio_maximo, 
   num_habitaciones, 
   num_bathrooms,
   zonas_excluir,
-  "filtrado_solo_nuevas_"
+  "filtrado_solo_nuevas_",
+  porcnt_reventa
 )
 
 # Filtrado de solo las que bajaron de precio
 filtrado_zonas_precio(
-  df_bajaron_precio, 
+  df_bajaron_precio,
+  file_new,
   zonas_objetivo, 
   precio_maximo, 
   num_habitaciones, 
   num_bathrooms,
   zonas_excluir,
-  "filtrado_bajaron_precio_"
+  "filtrado_bajaron_precio_",
+  porcnt_reventa
 )

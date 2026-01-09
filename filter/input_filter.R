@@ -6,6 +6,8 @@ n_nuevas <- 500
 precio_maximo <- 100000
 num_habitaciones <- 2
 num_bathrooms <- 2
+porcnt_reventa <- 0.90
+retorno_esperado <- 0.15
 
 zonas_objetivo <- c(
   "carolina",
@@ -34,8 +36,9 @@ zonas_objetivo <- c(
 
 zonas_excluir <- c(
   "sur", "carcelen", "carretas", "turubamba", "quitumbe", 
-  "cesar villacres", "calderon", "cotocollao", "enrique aymer"
-)
+  "cesar villacres", "calderon", "cotocollao", "enrique aymer",
+  "oficina", "negocio"
+  )
 
 
 
