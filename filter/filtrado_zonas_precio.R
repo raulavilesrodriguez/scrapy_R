@@ -135,12 +135,23 @@ filtrado_zonas_precio <- function(
   
   # Gráfico de caja de descuentos por zona
   plot_descuentos <- ggplot(oportunidades, aes(zona, descuento_pct)) +
-    geom_boxplot() +
+    geom_boxplot(
+      fill = "#6BB6FF",
+      alpha = 0.7,
+      outlier.color = "#1F5FAA"
+    ) +
     coord_flip() +
     labs(
       title = "Descuento vs mercado por zona",
       y = "Descuento %",
       x = ""
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(
+      panel.background = element_rect(fill = "#EDF5FF", color = NA),
+      plot.background  = element_rect(fill = "#EDF5FF", color = NA),
+      axis.text.y      = element_text(face = "bold"),
+      plot.title       = element_text(face = "bold")
     )
   print(plot_descuentos)
   
